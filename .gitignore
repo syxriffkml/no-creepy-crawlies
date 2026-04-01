@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+
+# API keys / local dev secrets
+.env
+.env.local
+.env.*.local
+
+# Extension build artifacts
+*.zip
+*.crx

@@ -1,0 +1,17 @@
+{
+  "name": "no-creepy-crawlies",
+  "version": "1.0.0",
+  "description": "AI-powered browser extension that detects and blurs insect & bug images across the web",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "generate-icons": "node scripts/generate-icons.js",
+    "setup": "node scripts/generate-icons.js"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "tailwindcss": "^4.1.4",
+    "vite": "^6.3.3",
+    "vite-plugin-web-extension": "^4.2.0"
+  }
+}
