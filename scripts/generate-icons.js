@@ -67,7 +67,7 @@ function createPNG(size, r, g, b) {
   ]);
 }
 
-const outDir = path.join(__dirname, '../src/assets/icons');
+const outDir = path.join(__dirname, '../src/public/assets/icons');
 fs.mkdirSync(outDir, { recursive: true });
 
 // BugBlind green: #22c55e (Tailwind green-500)

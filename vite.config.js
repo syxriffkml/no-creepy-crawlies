@@ -10,6 +10,8 @@ export default defineConfig({
   },
   plugins: [
     tailwindcss(),
-    webExtension(),
+    webExtension({
+      additionalInputs: ['onboarding/onboarding.html'],
+    }),
   ],
 });
