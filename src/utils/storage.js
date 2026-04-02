@@ -40,7 +40,7 @@ export const DEFAULTS = {
 // Low-level wrappers (promisify the callback-based chrome.storage API)
 // ---------------------------------------------------------------------------
 
-function storageGet(keys) {
+export function storageGet(keys) {
   return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
 }
 
