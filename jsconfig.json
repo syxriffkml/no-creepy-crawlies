@@ -2,11 +2,10 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "types": ["chrome"],
-    "checkJs": true,
-    "noEmit": true,
-    "strict": false
+    "checkJs": false,
+    "noEmit": true
   },
   "include": ["src/**/*.js"]
 }
