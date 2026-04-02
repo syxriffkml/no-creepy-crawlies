@@ -66,12 +66,31 @@
   font-family: system-ui, sans-serif;
 }
 
+.ncc-btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .ncc-btn-reveal {
   background: #ef4444;
   color: #fff;
 }
 
+.ncc-btn-reveal:hover {
+  background: #dc2626;
+}
+
 .ncc-btn-keep {
   background: #374151;
   color: #fff;
+}
+
+.ncc-btn-keep:hover {
+  background: #4b5563;
+}
+
+.ncc-warning-card strong {
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
 }
