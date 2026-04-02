@@ -1,7 +1,7 @@
 // No Creepy Crawlies — Service Worker (background script)
 // Handles: API calls, cache, usage tracking, message brokering
 
-import { scanImage } from '../utils/apiClients.js';
+import { scanImage, testApiKey } from '../utils/apiClients.js';
 import { storageGet, getCacheEntry, setCacheEntry, getActiveApi } from '../utils/storage.js';
 import { trackCall } from '../utils/usageTracker.js';
 
@@ -24,7 +24,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     handleScanImage(msg.url)
       .then(sendResponse)
       .catch(() => sendResponse(null));
-    return true; // keep message channel open for async response
+    return true;
+  }
+
+  if (msg.type === 'TEST_API_KEY') {
+    testApiKey(msg.provider, msg.apiKey)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: 'Unexpected error' }));
+    return true;
   }
 });
 
