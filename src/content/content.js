@@ -1,52 +1,77 @@
 // No Creepy Crawlies — Content Script
-// Scans the page for bug images and coordinates with the background service worker.
 
 import { collectImages, observeMutations, observeViewport } from '../utils/imageScanner.js';
-import { applyBlur, findElementsByUrl } from './blurReveal.js';
+import { applyBlur, applyProvisionalBlur, removeProvisionalBlur, findElementsByUrl } from './blurReveal.js';
 
-// URLs already queued for scanning this page session — avoids duplicate API calls
-const queued = new Set();
+// url → Set<HTMLElement> — tracks every element associated with a scan request
+// Storing element refs means we can blur them even if their src changes
+// by the time the API responds (e.g. Google Images upgrading thumbnail quality)
+const queued = new Map();
+
+// url → result — avoids re-scanning when SPA re-renders the same image
+const localCache = new Map();
 
 // ---------------------------------------------------------------------------
-// Scan pipeline
+// Core pipeline
 // ---------------------------------------------------------------------------
 
-/**
- * Send one image URL to the background for scanning.
- * Results are handled by applyResult() when they come back.
- */
-function queueScan(url) {
-  if (queued.has(url)) return;
-  queued.add(url);
+function queueScan(url, element) {
+  if (!url || url.startsWith('data:')) return;
 
-  chrome.runtime.sendMessage({ type: 'SCAN_IMAGE', url }, async (result) => {
-    if (chrome.runtime.lastError) return; // extension context invalidated, ignore
-    await applyResult(url, result);
-  });
+  // Already have a cached result — apply to this element immediately
+  if (localCache.has(url)) {
+    applyToElements(localCache.get(url), element ? [element] : findElementsByUrl(url));
+    return;
+  }
+
+  // Provisional blur immediately — don't wait for the API
+  if (element) applyProvisionalBlur(element);
+
+  // First time seeing this URL — send to background for scanning
+  if (!queued.has(url)) {
+    queued.set(url, new Set());
+    chrome.runtime.sendMessage({ type: 'SCAN_IMAGE', url }, async (result) => {
+      if (chrome.runtime.lastError) return;
+      if (result) localCache.set(url, result);
+      await applyResult(url, result);
+    });
+  }
+
+  // Always track the element ref (API call may already be in flight)
+  if (element) queued.get(url).add(element);
 }
 
-/**
- * Act on a scan result for a given URL.
- * Checks the confidence threshold, then blurs every element on the page
- * that matches this URL.
- */
 async function applyResult(url, result) {
-  if (!result?.detected) return;
+  const stored = [...(queued.get(url) ?? [])].filter((el) => document.contains(el));
+  const byUrl = findElementsByUrl(url);
+  const elements = [...new Set([...stored, ...byUrl])];
+
+  if (!result?.detected) {
+    // Not an insect — remove provisional blurs
+    for (const el of elements) removeProvisionalBlur(el);
+    return;
+  }
 
   const { confidenceThreshold = 0.9 } = await chrome.storage.local.get('confidenceThreshold');
-  if (result.confidence < confidenceThreshold) return;
+  if (result.confidence < confidenceThreshold) {
+    for (const el of elements) removeProvisionalBlur(el);
+    return;
+  }
 
-  for (const el of findElementsByUrl(url)) {
+  // Confirmed insect — upgrade provisional blur to full blur with overlay
+  applyToElements(result, elements);
+}
+
+function applyToElements(result, elements) {
+  if (!result?.detected) return;
+  for (const el of elements) {
     applyBlur(el, result);
   }
 }
 
-/**
- * Run an initial scan of all images currently in the DOM.
- */
 function scanPage() {
-  for (const { url } of collectImages()) {
-    queueScan(url);
+  for (const { url, element } of collectImages()) {
+    queueScan(url, element);
   }
 }
 
@@ -59,7 +84,6 @@ async function init() {
     'enabled',
     'whitelistedDomains',
   ]);
-
   if (!enabled) return;
 
   const hostname = window.location.hostname;
@@ -68,22 +92,32 @@ async function init() {
   );
   if (isWhitelisted) return;
 
-  // 1. Immediate scan of whatever is already loaded
+  // 1. Scan whatever is already in the DOM with a real URL
   scanPage();
 
-  // 2. Pre-scan images as they approach the viewport (fires before scrolling
-  //    is needed — covers lazy-loaded sites like Google Images)
-  observeViewport((url) => queueScan(url));
+  // 2. Pre-scan images 400px before they enter the viewport
+  observeViewport((url, el) => queueScan(url, el));
 
-  // 3. Watch for src changes + newly injected images (infinite scroll, SPAs)
+  // 3. Catch src/srcset changes + new elements (lazy loaders, infinite scroll)
   observeMutations((newImages) => {
-    for (const { url } of newImages) {
-      queueScan(url);
+    for (const { url, element } of newImages) {
+      queueScan(url, element);
     }
   });
 
-  // 4. Re-scan after the page fully settles to catch anything that
-  //    wasn't ready during the initial DOMContentLoaded phase
+  // 4. Scan images the moment they finish loading — currentSrc is guaranteed to be set
+  //    load doesn't bubble, so capture phase is required
+  document.addEventListener(
+    'load',
+    (e) => {
+      if (!(e.target instanceof HTMLImageElement)) return;
+      const src = e.target.currentSrc || e.target.src;
+      queueScan(src, e.target);
+    },
+    true,
+  );
+
+  // 5. Re-scan after page fully settles
   if (document.readyState !== 'complete') {
     window.addEventListener('load', scanPage, { once: true });
   }

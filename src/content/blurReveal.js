@@ -6,14 +6,45 @@
 // ---------------------------------------------------------------------------
 
 /**
+ * Apply a provisional (silent) blur immediately while the API is in flight.
+ * No overlay label — the image just blurs. Upgraded to full blur or removed after API responds.
+ * Safe to call multiple times on the same element (idempotent).
+ */
+export function applyProvisionalBlur(el) {
+  if (el.closest('.ncc-wrapper')) return; // already wrapped
+  const wrapper = wrapElement(el);
+  wrapper.classList.add('ncc-provisional');
+  el.classList.add('ncc-blurred');
+}
+
+/**
+ * Remove a provisional blur (API said no insect). No-op if already upgraded to confirmed.
+ */
+export function removeProvisionalBlur(el) {
+  const wrapper = el.closest('.ncc-wrapper.ncc-provisional');
+  if (!wrapper) return;
+  el.classList.remove('ncc-blurred');
+  wrapper.parentNode.insertBefore(el, wrapper);
+  wrapper.remove();
+}
+
+/**
  * Blur an element and attach the click-to-reveal overlay.
+ * Upgrades a provisional blur in-place, or wraps from scratch.
  * Safe to call multiple times on the same element (idempotent).
  */
 export function applyBlur(el, result) {
-  if (el.closest('.ncc-wrapper')) return; // already processed
+  let wrapper = el.closest('.ncc-wrapper');
 
-  const wrapper = wrapElement(el);
-  el.classList.add('ncc-blurred');
+  if (wrapper && !wrapper.classList.contains('ncc-provisional')) return; // already fully processed
+
+  if (!wrapper) {
+    wrapper = wrapElement(el);
+    el.classList.add('ncc-blurred');
+  } else {
+    // Upgrade provisional → confirmed
+    wrapper.classList.remove('ncc-provisional');
+  }
 
   const overlay = buildOverlay(result.type);
   wrapper.appendChild(overlay);

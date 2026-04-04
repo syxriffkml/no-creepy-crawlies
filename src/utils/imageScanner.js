@@ -134,11 +134,9 @@ export function observeMutations(onNewImages) {
       // Newly inserted nodes
       for (const node of mutation.addedNodes) processNode(node);
 
-      // src swapped on an existing <img> (e.g. lazy loader revealing real src)
-      if (
-        mutation.type === 'attributes' &&
-        mutation.target instanceof HTMLImageElement
-      ) {
+      // src / srcset swapped on an existing <img>
+      if (mutation.type === 'attributes' && mutation.target instanceof HTMLImageElement) {
+        // Use currentSrc (browser-resolved from srcset) when available
         const src = mutation.target.currentSrc || mutation.target.src;
         if (src) enqueue(src, mutation.target, 'img');
       }
@@ -149,7 +147,7 @@ export function observeMutations(onNewImages) {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['src', 'poster'],
+    attributeFilter: ['src', 'srcset', 'poster'],
   });
 
   return observer;
