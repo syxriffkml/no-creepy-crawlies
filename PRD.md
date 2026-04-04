@@ -15,13 +15,13 @@ BugBlind is a browser extension that uses AI vision APIs to automatically detect
 
 ## 2. Browser Support
 
-| Browser | Engine | Notes |
-|---|---|---|
-| Chrome | Chromium | Primary target |
-| Edge | Chromium | Same codebase as Chrome |
-| Opera | Chromium | Same codebase as Chrome |
-| Opera GX | Chromium | Same codebase as Chrome |
-| Firefox | Gecko | Requires separate `manifest.json` (Manifest V2), same core logic |
+| Browser  | Engine   | Notes                                                            |
+| -------- | -------- | ---------------------------------------------------------------- |
+| Chrome   | Chromium | Primary target                                                   |
+| Edge     | Chromium | Same codebase as Chrome                                          |
+| Opera    | Chromium | Same codebase as Chrome                                          |
+| Opera GX | Chromium | Same codebase as Chrome                                          |
+| Firefox  | Gecko    | Requires separate `manifest.json` (Manifest V2), same core logic |
 
 > Use **Manifest V3** for Chromium browsers, **Manifest V2** for Firefox.
 
@@ -31,12 +31,12 @@ BugBlind is a browser extension that uses AI vision APIs to automatically detect
 
 All 4 APIs are supported. Users choose which one(s) to use and provide their own API keys.
 
-| API | Accuracy | Cost | Pros | Cons |
-|---|---|---|---|---|
-| Claude Vision | ⭐⭐⭐⭐⭐ | 💰💰💰 | Most accurate, best context understanding | Pricier, no free tier |
-| Gemini Flash | ⭐⭐⭐⭐⭐ | 💰 | Smart, very affordable, generous limits | Requires Google account |
-| Google Cloud Vision | ⭐⭐⭐⭐ | 💰💰 | Fast, reliable, widely used | Less context-aware than LLMs |
-| Clarifai | ⭐⭐⭐ | 💰💰 | Dedicated insect/animal model | Less accurate overall |
+| API                 | Accuracy   | Cost   | Pros                                      | Cons                         |
+| ------------------- | ---------- | ------ | ----------------------------------------- | ---------------------------- |
+| Claude Vision       | ⭐⭐⭐⭐⭐ | 💰💰💰 | Most accurate, best context understanding | Pricier, no free tier        |
+| Gemini Flash        | ⭐⭐⭐⭐⭐ | 💰     | Smart, very affordable, generous limits   | Requires Google account      |
+| Google Cloud Vision | ⭐⭐⭐⭐   | 💰💰   | Fast, reliable, widely used               | Less context-aware than LLMs |
+| Clarifai            | ⭐⭐⭐     | 💰💰   | Dedicated insect/animal model             | Less accurate overall        |
 
 - **Recommended badge:** Gemini Flash (best accuracy-to-cost ratio)
 - **Default fallback order:** Claude → Gemini → Google Cloud Vision → Clarifai
@@ -95,7 +95,7 @@ bugblind/
 ### 5.2 Blur & Reveal
 
 - Detected bug images are **blurred** (CSS `filter: blur(20px)`)
-- A small overlay label is shown on the blurred image (e.g. 🐛 *Blocked*)
+- A small overlay label is shown on the blurred image (e.g. 🐛 _Blocked_)
 - **Click to reveal** — clicking the blurred image shows a warning card:
   ```
   ⚠️ Spider detected
@@ -108,6 +108,7 @@ bugblind/
 ### 5.3 API Call Optimization
 
 To minimize API usage:
+
 - **Cache results by image URL** — if the same image URL has been scanned before, use cached result (stored in `chrome.storage.local`)
 - **Skip small images** — ignore images under 50x50px
 - **Viewport-first scanning** — prioritize images in the visible viewport, then scan offscreen images progressively
@@ -131,11 +132,13 @@ To minimize API usage:
 ## 6. Usage Tracker
 
 ### 6.1 Tracking
+
 - Counts API calls per API key
 - Stored in `chrome.storage.local`
 - Tracks: total calls this month, calls per day (for popup stat)
 
 ### 6.2 Warning Thresholds
+
 - **80% used** → first warning
 - **90% used** → second warning
 - Warnings shown via:
@@ -143,6 +146,7 @@ To minimize API usage:
   - **Browser toast notification** (chrome.notifications API)
 
 ### 6.3 Reset
+
 - Counter resets **automatically on the 1st of every month**
 - Reset date is stored so the extension knows when to reset on next load
 
@@ -153,6 +157,7 @@ To minimize API usage:
 Triggered automatically when the extension is installed and no API key is found.
 
 ### Steps:
+
 1. **Welcome screen** — brief intro to BugBlind, what it does
 2. **Choose API** — card-based selection showing all 4 options with:
    - Short pros & cons
@@ -169,16 +174,16 @@ Triggered automatically when the extension is installed and no API key is found.
 
 ## 8. Settings Page
 
-| Section | Options |
-|---|---|
-| **API Management** | Add/remove API keys, set priority/fallback order, test keys |
-| **Confidence Threshold** | Slider (50%–99%), default 90% |
-| **Usage Notifications** | Toggle warnings on/off, view current usage per API |
-| **Whitelisted Sites** | Add/remove domains to skip scanning |
-| **Whitelisted Bug Types** | Toggle specific bug types to not block (e.g. butterflies) |
-| **Theme** | Light / Dark / System (default: System) |
-| **Reset Usage Counter** | Manual reset button |
-| **About / Help** | Version info, link to GitHub README |
+| Section                   | Options                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| **API Management**        | Add/remove API keys, set priority/fallback order, test keys |
+| **Confidence Threshold**  | Slider (50%–99%), default 90%                               |
+| **Usage Notifications**   | Toggle warnings on/off, view current usage per API          |
+| **Whitelisted Sites**     | Add/remove domains to skip scanning                         |
+| **Whitelisted Bug Types** | Toggle specific bug types to not block (e.g. butterflies)   |
+| **Theme**                 | Light / Dark / System (default: System)                     |
+| **Reset Usage Counter**   | Manual reset button                                         |
+| **About / Help**          | Version info, link to GitHub README                         |
 
 ---
 
@@ -187,6 +192,7 @@ Triggered automatically when the extension is installed and no API key is found.
 Shown when user clicks the extension icon in the browser toolbar.
 
 Contents:
+
 - **On/Off toggle** — enable/disable extension globally
 - **Current API in use** — name + small status indicator (active/warning/error)
 - **Usage stats snapshot** — e.g. "423 / 1,000 calls used this month"
@@ -224,22 +230,26 @@ All of the following are blocked by default. Users can whitelist any in Settings
 ## 12. API Integration Notes
 
 ### Claude Vision (Anthropic)
+
 - Endpoint: `https://api.anthropic.com/v1/messages`
 - Send image as base64 in the message content
-- Prompt: *"Does this image contain any insects, bugs, spiders, or creepy crawlies? Reply with JSON: { detected: true/false, type: string, confidence: number }"*
+- Prompt: _"Does this image contain any insects, bugs, spiders, or creepy crawlies? Reply with JSON: { detected: true/false, type: string, confidence: number }"_
 - Model: `claude-opus-4-5` or latest available vision model
 
 ### Gemini Flash (Google)
+
 - Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
 - Send image as base64 inline data part
 - Same JSON prompt structure as above
 
 ### Google Cloud Vision
+
 - Endpoint: `https://vision.googleapis.com/v1/images:annotate`
 - Use `LABEL_DETECTION` and `OBJECT_LOCALIZATION` features
 - Check returned labels against a known insect label list
 
 ### Clarifai
+
 - Endpoint: `https://api.clarifai.com/v2/models/{model_id}/outputs`
 - Use the `general-image-recognition` or `ai-general-recognition` model
 - Check returned concepts against insect/bug keyword list
@@ -272,4 +282,4 @@ All of the following are blocked by default. Users can whitelist any in Settings
 
 ---
 
-*PRD generated from planning session. Feed this to Claude Code as the first message to begin implementation.*
+_PRD generated from planning session. Feed this to Claude Code as the first message to begin implementation._
