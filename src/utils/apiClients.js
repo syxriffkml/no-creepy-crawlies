@@ -100,10 +100,11 @@ export async function callClaude(apiKey, imageBase64, mimeType = "image/jpeg") {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
       model: "claude-opus-4-5",
-      max_tokens: 100,
+      max_tokens: 256,
       messages: [
         {
           role: "user",
@@ -137,33 +138,33 @@ export async function callClaude(apiKey, imageBase64, mimeType = "image/jpeg") {
 // ---------------------------------------------------------------------------
 
 export async function callGemini(apiKey, imageBase64, mimeType = "image/jpeg") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-        contents: [
-            {
-            parts: [
-                { inline_data: { mime_type: mimeType, data: imageBase64 } },
-                { text: SCAN_PROMPT },
-            ],
-            },
-        ],
-        generationConfig: { maxOutputTokens: 100, temperature: 0 },
-        }),
-    });
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
+            { text: SCAN_PROMPT },
+          ],
+        },
+      ],
+      generationConfig: { maxOutputTokens: 256, temperature: 0 },
+    }),
+  });
 
-    if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Gemini ${res.status}: ${body}`);
-    }
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gemini ${res.status}: ${body}`);
+  }
 
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Gemini returned an empty response");
-    return normalize(extractJson(text));
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Gemini returned an empty response");
+  return normalize(extractJson(text));
 }
 
 // ---------------------------------------------------------------------------

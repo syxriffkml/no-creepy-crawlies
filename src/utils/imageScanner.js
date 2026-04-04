@@ -154,3 +154,40 @@ export function observeMutations(onNewImages) {
 
   return observer;
 }
+
+// ---------------------------------------------------------------------------
+// Viewport observer
+// ---------------------------------------------------------------------------
+
+/**
+ * Watch all current <img> and <video poster> elements and call onImage(url, el)
+ * as they approach the viewport (400px before visible).
+ * This proactively triggers scans on lazy-loaded sites without requiring a scroll.
+ */
+export function observeViewport(onImage) {
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target;
+        const url =
+          el instanceof HTMLImageElement
+            ? el.currentSrc || el.src
+            : el instanceof HTMLVideoElement
+              ? el.poster
+              : null;
+        if (url && !url.startsWith('data:') && !isTooSmall(el)) {
+          onImage(url, el);
+        }
+        io.unobserve(el); // one scan per element is enough
+      }
+    },
+    { rootMargin: '400px 0px' }, // fire 400px before the image enters view
+  );
+
+  for (const el of document.querySelectorAll('img, video[poster]')) {
+    io.observe(el);
+  }
+
+  return io;
+}

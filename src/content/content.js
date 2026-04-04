@@ -1,7 +1,7 @@
 // No Creepy Crawlies — Content Script
 // Scans the page for bug images and coordinates with the background service worker.
 
-import { collectImages, observeMutations } from '../utils/imageScanner.js';
+import { collectImages, observeMutations, observeViewport } from '../utils/imageScanner.js';
 import { applyBlur, findElementsByUrl } from './blurReveal.js';
 
 // URLs already queued for scanning this page session — avoids duplicate API calls
@@ -68,15 +68,26 @@ async function init() {
   );
   if (isWhitelisted) return;
 
-  // Scan images already in the DOM
+  // 1. Immediate scan of whatever is already loaded
   scanPage();
 
-  // Watch for images added dynamically (infinite scroll, SPAs, lazy loaders)
+  // 2. Pre-scan images as they approach the viewport (fires before scrolling
+  //    is needed — covers lazy-loaded sites like Google Images)
+  observeViewport((url) => queueScan(url));
+
+  // 3. Watch for src changes + newly injected images (infinite scroll, SPAs)
   observeMutations((newImages) => {
     for (const { url } of newImages) {
       queueScan(url);
     }
   });
+
+  // 4. Re-scan after the page fully settles to catch anything that
+  //    wasn't ready during the initial DOMContentLoaded phase
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', scanPage, { once: true });
+  }
+  setTimeout(scanPage, 2000);
 }
 
 init();
