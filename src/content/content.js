@@ -24,14 +24,23 @@ function queueScan(url, element) {
     return;
   }
 
-  // Provisional blur immediately — don't wait for the API
-  if (element) applyProvisionalBlur(element);
+  // Provisional blur only for images that haven't finished loading yet.
+  // Already-visible images (complete=true) get scanned normally — blurring them
+  // provisionally just creates a flicker since the user can already see them.
+  if (element && element instanceof HTMLImageElement && !element.complete) {
+    applyProvisionalBlur(element);
+  }
 
   // First time seeing this URL — send to background for scanning
   if (!queued.has(url)) {
     queued.set(url, new Set());
     chrome.runtime.sendMessage({ type: 'SCAN_IMAGE', url }, async (result) => {
-      if (chrome.runtime.lastError) return;
+      if (chrome.runtime.lastError) {
+        // API unreachable — remove any provisional blurs so images aren't stuck
+        const stored = [...(queued.get(url) ?? [])].filter((el) => document.contains(el));
+        for (const el of stored) removeProvisionalBlur(el);
+        return;
+      }
       if (result) localCache.set(url, result);
       await applyResult(url, result);
     });
