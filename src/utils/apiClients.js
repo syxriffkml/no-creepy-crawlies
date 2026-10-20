@@ -152,7 +152,11 @@ export async function callGemini(apiKey, imageBase64, mimeType = "image/jpeg") {
           ],
         },
       ],
-      generationConfig: { maxOutputTokens: 256, temperature: 0 },
+      generationConfig: {
+        maxOutputTokens: 256,
+        temperature: 0,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     }),
   });
 
